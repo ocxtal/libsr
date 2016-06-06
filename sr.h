@@ -20,7 +20,7 @@ typedef struct sr_s sr_t;
 struct sr_params_s {
 	uint8_t k;					/* kmer length */
 	uint8_t seq_direction;		/* FW_ONLY or FW_RV */
-	uint8_t file_format;		/* equal to fna_params_t.file_format */
+	uint8_t format;				/* equal to fna_params_t.file_format */
 	uint8_t reserved1;
 	uint16_t num_threads;
 	uint16_t reserved2;
