@@ -21,7 +21,6 @@
  */
 struct sr_s {
 	lmm_t *lmm;
-	void *single_read_mem;
 	fna_t *fna;
 	gref_acv_t *acv;
 	gref_idx_t *idx;
@@ -167,7 +166,7 @@ struct sr_gref_s *sr_get_iter_read(
 	gref_acv_t *acv = NULL;
 
 	/* init local memory */
-	lmm_t *lmm_read = lmm_init(sr->single_read_mem, SR_SINGLE_READ_MEM_SIZE);
+	lmm_t *lmm_read = lmm_init(NULL, SR_SINGLE_READ_MEM_SIZE);
 
 	/* read a sequence */
 	fna_seq_t *seq = NULL;
@@ -245,7 +244,6 @@ sr_t *sr_init(
 	if(sr->fna == NULL) {
 		goto _sr_init_error_handler;
 	}
-	sr->single_read_mem = lmm_malloc(lmm, SR_SINGLE_READ_MEM_SIZE);
 
 	/* copy params */
 	sr->params = *params;
