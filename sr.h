@@ -89,9 +89,9 @@ struct sr_gref_s *sr_get_iter(
 	sr_t *sr);
 
 /**
- * @fn sr_free
+ * @fn sr_gref_free
  */
-void sr_free(
+void sr_gref_free(
 	struct sr_gref_s *gref);
 
 #endif /* _SR_H_INCLUDED */

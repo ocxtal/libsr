@@ -243,9 +243,9 @@ struct sr_gref_s *sr_get_iter(
 }
 
 /**
- * @fn sr_free
+ * @fn sr_gref_free
  */
-void sr_free(
+void sr_gref_free(
 	struct sr_gref_s *_r)
 {
 	struct sr_gref_intl_s *r = (struct sr_gref_intl_s *)_r;
@@ -410,7 +410,7 @@ unittest()
 	assert(gref_get_total_len(idx->gref) == 24, "%lld", gref_get_total_len(idx->gref));
 	assert(idx->iter == NULL);
 
-	sr_free(idx);
+	sr_gref_free(idx);
 	sr_clean(sr);
 	remove(fasta_filename);
 }
@@ -439,19 +439,19 @@ unittest()
 	assert(strcmp(iter->path, fasta_filename) == 0);
 	assert(iter->gref != NULL);
 	assert(iter->iter != NULL);
-	sr_free(iter);
+	sr_gref_free(iter);
 
 	iter = sr_get_iter(sr);
 	assert(iter != NULL);
 	assert(iter->gref != NULL);
 	assert(iter->iter != NULL);
-	sr_free(iter);
+	sr_gref_free(iter);
 
 	iter = sr_get_iter(sr);
 	assert(iter != NULL);
 	assert(iter->gref != NULL);
 	assert(iter->iter != NULL);
-	sr_free(iter);
+	sr_gref_free(iter);
 
 	iter = sr_get_iter(sr);
 	assert(iter == NULL);
