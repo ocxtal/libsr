@@ -368,6 +368,15 @@ int fcmp(char const *filename, int64_t size, uint8_t const *arr)
 unittest()
 {
 	char const *fasta_filename = "test.fa";
+
+	remove(fasta_filename);
+	sr_t *sr = sr_init(fasta_filename, NULL);
+	assert(sr == NULL);
+}
+
+unittest()
+{
+	char const *fasta_filename = "test.fa";
 	char const *fasta_content =
 		">test1\n"
 		"ACGTACGT\n"
