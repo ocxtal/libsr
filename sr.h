@@ -4,15 +4,36 @@
  *
  * @brief sequence reader implementation
  */
-#ifndef _AW_H_INCLUDED
-#define _AW_H_INCLUDED
+#ifndef _SR_H_INCLUDED
+#define _SR_H_INCLUDED
 
 #include <stdint.h>
+#include "gref/gref.h"
 
 /**
  * @type sr_t
  */
 typedef struct sr_s sr_t;
+
+/**
+ * @enum sr_format
+ * @brief format flag constant
+ */
+enum sr_format {
+	SR_UNKNOWN		= 0,
+	SR_FASTA		= 1,
+	SR_FASTQ		= 2,
+	SR_FAST5		= 3,
+	SR_GFA			= 4
+};
+
+/**
+ * @enum sr_revcomp
+ */
+enum sr_revcomp {
+	SR_FW_ONLY		= 1,
+	SR_FW_RV		= 2
+};
 
 /**
  * @struct sr_params_s
@@ -35,7 +56,7 @@ typedef struct sr_params_s sr_params_t;
  * @brief gref and iter container
  */
 struct sr_gref_s {
-	void *reserved1;
+	void *lmm;
 	char const *path;
 	gref_t const *gref;
 	gref_iter_t *iter;
@@ -73,6 +94,7 @@ struct sr_gref_s *sr_get_iter(
 void sr_free(
 	struct sr_gref_s *gref);
 
+#endif /* _SR_H_INCLUDED */
 /**
  * end of sr.h
  */
