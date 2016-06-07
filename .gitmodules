@@ -1,0 +1,6 @@
+[submodule "fna"]
+	path = fna
+	url = https://github.com/ocxtal/libfna.git
+[submodule "gref"]
+	path = gref
+	url = https://github.com/ocxtal/libgref.git
