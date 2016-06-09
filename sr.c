@@ -58,8 +58,10 @@ struct sr_gref_intl_s {
 	char const *path;
 	gref_t const *gref;
 	gref_iter_t *iter;
-	uint8_t need_free;
-	uint8_t reserved2[7];
+	fna_seq_t *seq;
+	uint8_t gref_need_free;
+	uint8_t seq_need_free;
+	uint8_t reserved2[6];
 };
 
 /**
@@ -83,6 +85,13 @@ void sr_dump_seq(
 	while((seq = fna_read(sr->fna)) != NULL) {
 
 		if(seq->type == FNA_SEGMENT) {
+			/*
+			for(int64_t i = 0; i < seq->s.segment.seq_len; i++) {
+				fprintf(stderr, "%c", " AC G   T"[seq->s.segment.seq[i]]);
+			}
+			fprintf(stderr, "\n");
+			*/
+
 			gref_append_segment(pool,
 				seq->s.segment.name,
 				seq->s.segment.name_len,
@@ -145,7 +154,7 @@ struct sr_gref_s *sr_get_index(
 		.path = sr->path,
 		.gref = (gref_t const *)sr->idx,
 		.iter = NULL,
-		.need_free = 0
+		.gref_need_free = 0
 	};
 	return((struct sr_gref_s *)r);
 }
@@ -169,7 +178,7 @@ struct sr_gref_s *sr_get_iter_graph(
 		.path = sr->path,
 		.gref = NULL,
 		.iter = gref_iter_init(sr->acv),
-		.need_free = 1
+		.gref_need_free = 1
 	};
 	return((struct sr_gref_s *)r);
 }
@@ -198,11 +207,18 @@ struct sr_gref_s *sr_get_iter_read(
 	fna_seq_t *seq = NULL;
 	while((seq = fna_read(sr->fna)) != NULL) {
 		if(seq->type == FNA_SEGMENT) {
+			/*
+			for(int64_t i = 0; i < seq->s.segment.seq_len; i++) {
+				fprintf(stderr, "%c", " AC G   T"[seq->s.segment.seq[i]]);
+			}
+			fprintf(stderr, "\n");
+			*/
+
 			gref_pool_t *pool = gref_init_pool(GREF_PARAMS(
 				.k = sr->params.k,
 				.seq_direction = sr->params.seq_direction,
 				.seq_format = GREF_4BIT,
-				.copy_mode = GREF_COPY,
+				.copy_mode = GREF_NOCOPY,
 				.num_threads = sr->params.num_threads,
 				.lmm = lmm_read));
 
@@ -228,7 +244,9 @@ struct sr_gref_s *sr_get_iter_read(
 		.path = sr->path,
 		.gref = acv,
 		.iter = gref_iter_init(acv),
-		.need_free = 1
+		.seq = seq,
+		.gref_need_free = 1,
+		.seq_need_free = 1
 	};
 	return((struct sr_gref_s *)r);
 }
@@ -251,8 +269,10 @@ void sr_gref_free(
 	struct sr_gref_intl_s *r = (struct sr_gref_intl_s *)_r;
 	if(r == NULL) { return; }
 
-	if(r->need_free != 0) { gref_clean((gref_t *)r->gref); } r->gref = NULL;
+	if(r->gref_need_free != 0) { gref_clean((gref_t *)r->gref); } r->gref = NULL;
 	gref_iter_clean(r->iter); r->iter = NULL;
+
+	if(r->seq_need_free != 0) { fna_seq_free(r->seq); r->seq = NULL; }
 
 	lmm_t *lmm = r->lmm; r->lmm = NULL;
 	lmm_free(lmm, r);
@@ -358,7 +378,10 @@ int fcmp(char const *filename, int64_t size, uint8_t const *arr)
 	if((fp = fopen(filename, "rb")) == NULL) { return(1); }
 	fstat(fileno(fp), &st);
 	buf = malloc(sizeof(uint8_t) * st.st_size);
-	fread(buf, st.st_size, sizeof(uint8_t), fp);
+
+	if(fread(buf, sizeof(uint8_t), st.st_size, fp) != st.st_size) {
+		return(0);
+	}
 	res = memcmp(buf, arr, size);
 	free(buf);
 	fclose(fp);
