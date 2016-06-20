@@ -76,6 +76,8 @@ void sr_dump_seq(
 		.k = sr->params.k,
 		.seq_direction = sr->params.seq_direction,
 		.seq_format = GREF_4BIT,
+		.seq_head_margin = 32,
+		.seq_tail_margin = 32,
 		.copy_mode = GREF_COPY,
 		.num_threads = sr->params.num_threads,
 		.lmm = NULL));
@@ -98,8 +100,8 @@ void sr_dump_seq(
 				seq->s.segment.seq,
 				seq->s.segment.seq_len);
 		} else if(seq->type == FNA_LINK) {
-			/* check cigar */
-			if(seq->s.link.cigar_len != 0) {
+			/* check cigar starts from '0' (indicating cigar is "0M") */
+			if(seq->s.link.cigar[0] != '0') {
 				debug("overlapping link is not supported.");
 				break;
 			} else {
@@ -169,6 +171,11 @@ struct sr_gref_s *sr_get_iter_graph(
 	/* check if archive is already built */
 	if(sr->acv == NULL) {
 		sr_dump_seq(sr);
+		if(sr->acv == NULL) {
+			return(NULL);
+		}
+	} else {
+		return(NULL);
 	}
 
 	struct sr_gref_intl_s *r = (struct sr_gref_intl_s *)malloc(
@@ -176,9 +183,8 @@ struct sr_gref_s *sr_get_iter_graph(
 	*r = (struct sr_gref_intl_s){
 		.lmm = NULL,
 		.path = sr->path,
-		.gref = NULL,
-		.iter = gref_iter_init(sr->acv),
-		.gref_need_free = 1
+		.gref = sr->acv,
+		.iter = gref_iter_init(sr->acv, NULL)
 	};
 	return((struct sr_gref_s *)r);
 }
@@ -243,7 +249,7 @@ struct sr_gref_s *sr_get_iter_read(
 		.lmm = lmm_read,
 		.path = sr->path,
 		.gref = acv,
-		.iter = gref_iter_init(acv),
+		.iter = gref_iter_init(acv, NULL),
 		.seq = seq,
 		.gref_need_free = 1,
 		.seq_need_free = 1
@@ -269,9 +275,8 @@ void sr_gref_free(
 	struct sr_gref_intl_s *r = (struct sr_gref_intl_s *)_r;
 	if(r == NULL) { return; }
 
-	if(r->gref_need_free != 0) { gref_clean((gref_t *)r->gref); } r->gref = NULL;
 	gref_iter_clean(r->iter); r->iter = NULL;
-
+	if(r->gref_need_free != 0) { gref_clean((gref_t *)r->gref); } r->gref = NULL;
 	if(r->seq_need_free != 0) { fna_seq_free(r->seq); r->seq = NULL; }
 
 	lmm_t *lmm = r->lmm; r->lmm = NULL;
@@ -301,7 +306,10 @@ sr_t *sr_init(
 	/* create fna object */
 	sr->fna = fna_init(path, FNA_PARAMS(
 		.file_format = params->format,
-		.seq_encode = FNA_4BIT));
+		.seq_encode = FNA_4BIT,
+		.seq_head_margin = 32,
+		.seq_tail_margin = 32));
+	debug("fna(%p)", sr->fna);
 	if(sr->fna == NULL) {
 		goto _sr_init_error_handler;
 	}
@@ -430,7 +438,7 @@ unittest()
 
 	fdump(fasta_filename, fasta_content);
 	sr_t *sr = sr_init(fasta_filename, SR_PARAMS(
-		.k = 3,
+		.k = 4,
 		.seq_direction = SR_FW_ONLY));
 	assert(sr != NULL);
 
@@ -460,7 +468,7 @@ unittest()
 
 	fdump(fasta_filename, fasta_content);
 	sr_t *sr = sr_init(fasta_filename, SR_PARAMS(
-		.k = 3,
+		.k = 4,
 		.seq_direction = SR_FW_ONLY));
 	assert(sr != NULL);
 
